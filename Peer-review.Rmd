@@ -1,0 +1,113 @@
+---
+title: "Reproducible_Peer_review"
+output: html_document
+---
+
+***
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+***
+
+Read Data:
+
+```{r reading}
+da = read.csv("activity.csv")
+```
+
+***
+
+Histogram of the total number of steps taken each day
+
+```{r}
+da$date = as.character(da$date)
+da$date  = as.POSIXct(da$date)
+library(data.table)
+da = as.data.table(da)
+total_steps_day = as.data.frame(da[, sum(steps,na.rm = TRUE),by = date])
+colnames(total_steps_day)[2] = "Total_steps"
+hist(total_steps_day$Total_steps, breaks = 10)
+
+```
+
+
+***
+
+Mean and median number of steps taken each day
+
+```{r}
+library(dplyr)
+mean_median = total_steps_day %>%
+        summarise(mean = mean(Total_steps,na.rm = TRUE), meian = median(Total_steps,na.rm = TRUE))
+mean_median
+
+```
+
+
+***
+
+Time series plot of the average number of steps taken
+
+```{r}
+plot(total_steps_day$date,total_steps_day$Total_steps,type = "l")
+```
+
+
+***
+
+
+The 5-minute interval that, on average, contains the maximum number of steps
+
+```{r}
+index = which.max(da$steps)
+da[index, 3]
+```
+
+At the 615 interval, it contain the maximum steps. 
+
+
+***
+
+
+Code to describe and show a strategy for imputing missing data (Using medium to replace)
+
+```{r}
+
+da1 = da
+da1$steps[is.na(da1$steps)] = median(da$steps,na.rm = TRUE)
+da1 = as.data.table(da1)
+total_steps_day1 = as.data.frame(da1[, sum(steps),by = date])
+colnames(total_steps_day1)[2] = "Total_steps"
+hist(total_steps_day1$Total_steps, breaks = 10)
+
+```
+
+
+***
+
+
+
+```{r}
+str(da1)
+da1$date = as.Date(da1$date)
+da1$date = weekdays(da1$date)
+da1 = da1 %>%
+        mutate(WEEK = ifelse(date==c("Sunday","Saturday"),"Weekend","Weekdays"))
+library(lattice)
+xyplot(steps~interval|WEEK,data = da1,panel = function(x, y){
+        panel.xyplot(x,y)
+        panel.abline(h = mean(y))
+})
+```
+
+
+
+```{r}
+p = subset(da1, WEEK == "Weekend")
+mean(p$steps)
+s = subset(da1, WEEK != "Weekend")
+mean(s$steps)
+```
+
