@@ -51,7 +51,9 @@ mean_median
 Time series plot of the average number of steps taken
 
 ```{r}
-plot(total_steps_day$date,total_steps_day$Total_steps,type = "l")
+interval_steps = da[,mean(steps,na.rm = TRUE),by = interval]
+colnames(interval_steps)[2] = "Average_steps"
+plot(interval_steps$interval,interval_steps$Average_steps,type = "l")
 ```
 
 
@@ -61,11 +63,11 @@ plot(total_steps_day$date,total_steps_day$Total_steps,type = "l")
 The 5-minute interval that, on average, contains the maximum number of steps
 
 ```{r}
-index = which.max(da$steps)
-da[index, 3]
+index = which.max(interval_steps$Average_steps)
+interval_steps[index, 1]
 ```
 
-At the 615 interval, it contain the maximum steps. 
+At the 835 interval, it contain the maximum steps. 
 
 
 ***
@@ -74,9 +76,8 @@ At the 615 interval, it contain the maximum steps.
 Code to describe and show a strategy for imputing missing data (Using medium to replace)
 
 ```{r}
-
 da1 = da
-da1$steps[is.na(da1$steps)] = median(da$steps,na.rm = TRUE)
+da1$steps[is.na(da1$steps)] = interval_steps$Average_steps
 da1 = as.data.table(da1)
 total_steps_day1 = as.data.frame(da1[, sum(steps),by = date])
 colnames(total_steps_day1)[2] = "Total_steps"
@@ -90,24 +91,27 @@ hist(total_steps_day1$Total_steps, breaks = 10)
 
 
 ```{r}
-str(da1)
+
 da1$date = as.Date(da1$date)
 da1$date = weekdays(da1$date)
 da1 = da1 %>%
         mutate(WEEK = ifelse(date==c("Sunday","Saturday"),"Weekend","Weekdays"))
-library(lattice)
-xyplot(steps~interval|WEEK,data = da1,panel = function(x, y){
-        panel.xyplot(x,y)
-        panel.abline(h = mean(y))
-})
+interval_WEEK_steps = tapply(da1$steps,INDEX = interaction(da1$interval,da1$WEEK),mean)
+interval_WEEK_steps = as.data.frame(interval_WEEK_steps)
+interval_WEEK_steps$WEEK = rownames(interval_WEEK_steps)
+n = interval_WEEK_steps$WEEK
+x = strsplit(n,"\\.")
+n1 = sapply(x, function(x) x[2])
+interval_WEEK_steps$WEEK = n1
+n2 = sapply(x, function(x) x[1])
+interval_WEEK_steps$interval = n2
+colnames(interval_WEEK_steps)[1] = "steps"
+interval_WEEK_steps$interval = as.numeric(interval_WEEK_steps$interval)
+library(ggplot2)
+ggplot(data = interval_WEEK_steps,aes(x = interval,y = steps,group = 1,color = WEEK))+geom_line()+
+        facet_grid(WEEK~.)
+
 ```
 
 
-
-```{r}
-p = subset(da1, WEEK == "Weekend")
-mean(p$steps)
-s = subset(da1, WEEK != "Weekend")
-mean(s$steps)
-```
 
