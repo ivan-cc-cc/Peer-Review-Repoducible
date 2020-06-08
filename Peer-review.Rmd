@@ -28,7 +28,9 @@ library(data.table)
 da = as.data.table(da)
 total_steps_day = as.data.frame(da[, sum(steps,na.rm = TRUE),by = date])
 colnames(total_steps_day)[2] = "Total_steps"
+
 hist(total_steps_day$Total_steps, breaks = 10)
+
 
 ```
 
@@ -53,7 +55,9 @@ Time series plot of the average number of steps taken
 ```{r}
 interval_steps = da[,mean(steps,na.rm = TRUE),by = interval]
 colnames(interval_steps)[2] = "Average_steps"
+
 plot(interval_steps$interval,interval_steps$Average_steps,type = "l")
+
 ```
 
 
@@ -81,7 +85,9 @@ da1$steps[is.na(da1$steps)] = interval_steps$Average_steps
 da1 = as.data.table(da1)
 total_steps_day1 = as.data.frame(da1[, sum(steps),by = date])
 colnames(total_steps_day1)[2] = "Total_steps"
+
 hist(total_steps_day1$Total_steps, breaks = 10)
+
 
 ```
 
@@ -108,6 +114,7 @@ interval_WEEK_steps$interval = n2
 colnames(interval_WEEK_steps)[1] = "steps"
 interval_WEEK_steps$interval = as.numeric(interval_WEEK_steps$interval)
 library(ggplot2)
+
 ggplot(data = interval_WEEK_steps,aes(x = interval,y = steps,group = 1,color = WEEK))+geom_line()+
         facet_grid(WEEK~.)
 
